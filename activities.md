@@ -147,3 +147,45 @@ App is live at `http://72.60.129.36` returning HTTP `200`.
 - Add a domain and point DNS A record to `72.60.129.36`
 - Run `certbot --nginx -d yourdomain.com` to enable HTTPS
 - Update `/app/trade-finance/.env` with real Supabase credentials and rebuild to enable auth
+
+---
+
+## 10. Made App Mobile Responsive
+
+### Problem
+The app was not usable on mobile — the sidebar consumed too much screen space with no way to hide it, all pages had excessive `px-8` padding, and several grids/tables broke on narrow screens.
+
+### Changes
+
+**New component: `SidebarLayout.tsx` (client component)**
+- Wraps the platform layout with mobile drawer logic
+- Sidebar hidden off-screen on mobile (`-translate-x-full`), slides in on hamburger tap
+- Dark overlay closes the drawer when tapped
+- Sticky mobile top bar shows hamburger button + logo on small screens only (`md:hidden`)
+
+**`Sidebar.tsx`**
+- Added `onClose` prop — called when nav links are clicked to close the drawer after navigation
+- Added `×` close button in the sidebar header, visible on mobile only
+
+**`(platform)/layout.tsx`**
+- Replaced direct `<Sidebar />` usage with `<SidebarLayout>` client wrapper
+
+**All platform pages** — `dashboard`, `modules`, `modules/[slug]`, `lessons/[slug]`, `quiz`, `achievements`
+- Changed `px-8` → `px-4 md:px-8` and `py-6` → `py-4 md:py-6` throughout
+
+**Dashboard**
+- Stats grid: `grid-cols-3` → `grid-cols-1 sm:grid-cols-3` (stacks on mobile)
+
+**Achievements**
+- Quiz performance table wrapped in `overflow-x-auto` with `min-w-[480px]` to scroll horizontally on mobile instead of breaking layout
+
+**Lesson page**
+- Nav buttons: `flex items-center justify-between` → `flex flex-col sm:flex-row` so prev/next buttons stack on mobile
+
+**Module detail page**
+- Icon size: `text-5xl` → `text-3xl md:text-5xl`
+
+### Deployment
+- Committed and pushed to GitHub
+- Pulled on server and rebuilt container: `git pull && docker compose up --build -d`
+- App live at `http://72.60.129.36` returning HTTP `200`
