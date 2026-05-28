@@ -66,7 +66,7 @@ export default async function ModulePage({ params }: { params: { moduleSlug: str
   return (
     <div>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 md:py-6">
         <Link href="/modules" className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mb-4">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -75,7 +75,7 @@ export default async function ModulePage({ params }: { params: { moduleSlug: str
         </Link>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="text-5xl">{meta.icon}</div>
+            <div className="text-3xl md:text-5xl">{meta.icon}</div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{meta.title}</h1>
               <p className="text-gray-500 mt-1 max-w-2xl">{meta.description}</p>
@@ -101,7 +101,7 @@ export default async function ModulePage({ params }: { params: { moduleSlug: str
         </div>
       </div>
 
-      <div className="px-8 py-6 max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="px-4 md:px-8 py-4 md:py-6 max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lessons list */}
         <div className="lg:col-span-2">
           <h2 className="font-bold text-gray-800 mb-4">Lessons</h2>

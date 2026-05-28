@@ -24,11 +24,11 @@ export default function QuizPage({ params }: { params: { moduleSlug: string } })
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 px-8 py-5">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 md:py-5">
         <div className="text-sm text-gray-400 mb-1">{MODULE_TITLES[moduleSlug]}</div>
         <h1 className="text-2xl font-bold text-gray-900">Module Quiz</h1>
       </div>
-      <div className="max-w-3xl mx-auto px-8 py-8">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-8">
         <QuizRunner
           moduleSlug={moduleSlug}
           questions={questionsForClient}

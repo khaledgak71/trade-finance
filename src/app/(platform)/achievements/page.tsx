@@ -69,12 +69,12 @@ export default async function AchievementsPage() {
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 md:py-6">
         <h1 className="text-2xl font-bold text-gray-900">Achievements</h1>
         <p className="text-gray-500 mt-1">{earnedCount} of {ACHIEVEMENTS.length} achievements earned</p>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-4 md:py-6">
         {/* Achievement badges */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {ACHIEVEMENTS.map(a => {
@@ -97,7 +97,8 @@ export default async function AchievementsPage() {
         {/* Quiz performance table */}
         <h2 className="font-bold text-gray-800 text-lg mb-4">Quiz Performance by Module</h2>
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="text-left px-6 py-3 font-semibold text-gray-600">Module</th>
@@ -134,6 +135,7 @@ export default async function AchievementsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Stats */}

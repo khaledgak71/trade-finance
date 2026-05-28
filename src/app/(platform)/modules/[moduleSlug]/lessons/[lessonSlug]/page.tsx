@@ -59,7 +59,7 @@ export default async function LessonPage({
   return (
     <div>
       {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center gap-2 text-sm text-gray-500">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 flex items-center gap-2 text-sm text-gray-500 overflow-x-auto">
         <Link href="/modules" className="hover:text-gray-700">Modules</Link>
         <span>/</span>
         <Link href={`/modules/${moduleSlug}`} className="hover:text-gray-700">{MODULE_TITLES[moduleSlug]}</Link>
@@ -68,7 +68,7 @@ export default async function LessonPage({
       </div>
 
       {/* Lesson content */}
-      <div className="max-w-4xl mx-auto px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">
             Lesson {lessonIndex + 1} of {content.lessons.length}
@@ -89,7 +89,7 @@ export default async function LessonPage({
         />
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-10 pt-6 border-t border-gray-200">
           {prevLesson ? (
             <Link
               href={`/modules/${moduleSlug}/lessons/${prevLesson.slug}`}

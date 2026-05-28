@@ -59,8 +59,8 @@ export default async function DashboardPage() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 md:py-6">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back, {firstName}!</h1>
             <p className="text-gray-500 mt-1">Continue your trade finance journey</p>
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 px-8 py-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 md:px-8 py-4 md:py-6">
         {[
           { label: 'Lessons Completed', value: totalCompleted, icon: '✅', color: 'text-green-600' },
           { label: 'Quizzes Attempted', value: quizAttempts?.length ?? 0, icon: '📝', color: 'text-blue-600' },
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Module cards */}
-      <div className="px-8 pb-8">
+      <div className="px-4 md:px-8 pb-8">
         <h2 className="text-lg font-bold text-gray-800 mb-4">Your Modules</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {MODULES.map((mod) => {

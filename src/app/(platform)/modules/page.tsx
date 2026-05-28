@@ -14,12 +14,12 @@ const MODULES = [
 export default function ModulesPage() {
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 md:py-6">
         <h1 className="text-2xl font-bold text-gray-900">All Modules</h1>
         <p className="text-gray-500 mt-1">6 modules · 25+ lessons · 6 interactive quizzes · 6 SVG infographics</p>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-4 md:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {MODULES.map((mod) => {
             const lessonCount = MODULE_CONTENT[mod.slug]?.lessons.length ?? 0
