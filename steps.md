@@ -1,174 +1,190 @@
-# Making the App Publicly Accessible with GoDaddy
+# Deployment Steps (Hostinger VPS + Nginx)
 
-After containerizing the app, you need two things: a server to run the container and a domain pointing to it. GoDaddy covers both.
-
----
-
-## Part 1 — Get a Domain on GoDaddy
-
-1. Go to godaddy.com and search for your domain name
-2. Purchase it (`.com` recommended)
-3. After purchase, go to **My Products** → find your domain → click **DNS**
-   - You will add records here in a later step once you have a server IP
+These are the exact steps followed to deploy the trade finance platform to a live server.
 
 ---
 
-## Part 2 — Get a Server
+## Part 1 — Provision the Server
 
-### Option A: GoDaddy VPS (keep everything in one place)
+1. Go to **hostinger.com** → **VPS Hosting**
+2. Choose the **KVM 2** plan (2 GB RAM minimum for Next.js builds)
+3. Select **Ubuntu 24.04** as the OS (24.04 works fine with Docker)
+4. Complete purchase
+5. Go to **hPanel → VPS → Manage** and note the **public IP address**
 
-1. Go to godaddy.com → **Hosting** → **VPS Hosting**
-2. Choose a Linux VPS — minimum **2 GB RAM** plan for Next.js builds
-3. Select **Ubuntu 22.04** as the OS
-4. Complete purchase and note your server's **public IP address**
-5. SSH into the server:
+---
+
+## Part 2 — Set Up SSH Access
+
+Hostinger disables password auth by default, so add your SSH public key via hPanel.
+
+### Generate an SSH key locally (if you don't have one)
 ```bash
-ssh root@YOUR_SERVER_IP
+ssh-keygen -t ed25519 -C "your@email.com" -f ~/.ssh/id_ed25519 -N ""
+cat ~/.ssh/id_ed25519.pub
 ```
 
-### Option B: Any other VPS (DigitalOcean, Hetzner, etc.) with GoDaddy domain only
-Same steps below apply — just use GoDaddy only for DNS in Part 3.
+### Add the key to Hostinger
+1. Go to **hPanel → VPS → Manage → SSH Keys**
+2. Click **Add SSH Key**
+3. Paste the output of `cat ~/.ssh/id_ed25519.pub`
+4. Save
+
+### Add GitHub to known_hosts and test connection
+```bash
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@YOUR_SERVER_IP "echo connected"
+```
 
 ---
 
-## Part 3 — Point Your GoDaddy Domain to the Server
+## Part 3 — Install Docker on the Server
 
-1. Go to godaddy.com → **My Products** → your domain → **DNS**
-2. Find the existing `A` record for `@` (root domain) → click the pencil icon to edit
-3. Set **Value** to your server's public IP address → Save
-4. Add another `A` record:
-   - **Name:** `www`
-   - **Value:** same server public IP
-   - **TTL:** 600 (10 minutes)
-5. Wait for DNS to propagate — usually 5–30 minutes, up to 24h
+```bash
+ssh root@YOUR_SERVER_IP "curl -fsSL https://get.docker.com | sh"
+```
 
-To check propagation:
+Docker was already pre-installed on the Hostinger image; this script updates it to the latest version.
+
+---
+
+## Part 4 — Clone the Repo and Create the Env File
+
+```bash
+ssh root@YOUR_SERVER_IP "git clone https://github.com/khaledgak71/trade-finance.git /app/trade-finance"
+```
+
+Create the `.env` file on the server:
+```bash
+ssh root@YOUR_SERVER_IP "cat > /app/trade-finance/.env << 'EOF'
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+EOF"
+```
+
+> If you don't have Supabase credentials yet, leave the placeholder values. The app has a mock client that activates automatically — the app will run but auth features won't work until real credentials are added.
+
+---
+
+## Part 5 — Build and Start the Container
+
+```bash
+ssh root@YOUR_SERVER_IP "
+cd /app/trade-finance && \
+export \$(grep -v '^#' .env | xargs) && \
+docker compose up --build -d
+"
+```
+
+Verify the container is running:
+```bash
+ssh root@YOUR_SERVER_IP "docker ps && curl -s -o /dev/null -w '%{http_code}' http://localhost:3001"
+```
+
+Should return `200`.
+
+> Note: `docker-compose.yml` maps host port `3001` → container port `3000`.
+
+---
+
+## Part 6 — Install Nginx and Configure Reverse Proxy
+
+```bash
+ssh root@YOUR_SERVER_IP "apt-get install -y nginx certbot python3-certbot-nginx"
+```
+
+Create the Nginx site config:
+```bash
+ssh root@YOUR_SERVER_IP "cat > /etc/nginx/sites-available/trade-finance << 'EOF'
+server {
+    listen 80;
+    server_name YOUR_DOMAIN_OR_IP;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF"
+```
+
+Enable the site and reload Nginx:
+```bash
+ssh root@YOUR_SERVER_IP "
+ln -sf /etc/nginx/sites-available/trade-finance /etc/nginx/sites-enabled/trade-finance && \
+rm -f /etc/nginx/sites-enabled/default && \
+nginx -t && systemctl reload nginx
+"
+```
+
+App is now accessible at `http://YOUR_SERVER_IP`.
+
+---
+
+## Part 7 — Add a Domain (GoDaddy or any registrar)
+
+1. Log in to your domain registrar
+2. Go to **DNS Management** for your domain
+3. Edit the `@` A record → set value to your server IP
+4. Add a `www` A record → same server IP
+5. Wait for DNS to propagate (5 min – 24h)
+
+Check propagation:
 ```bash
 nslookup yourdomain.com
 ```
 
----
-
-## Part 4 — Set Up Docker on the Server
-
-SSH into your server and run:
+Update the Nginx config to use your domain:
 ```bash
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-newgrp docker
+ssh root@YOUR_SERVER_IP "sed -i 's/YOUR_DOMAIN_OR_IP/yourdomain.com www.yourdomain.com/' /etc/nginx/sites-available/trade-finance && systemctl reload nginx"
 ```
 
 ---
 
-## Part 5 — Deploy the App
+## Part 8 — Add HTTPS via Let's Encrypt
 
-### Copy the project to the server
 ```bash
-# From your local machine
-scp -r /home/khaledgak/Projects/trade-finance-platform root@YOUR_SERVER_IP:/app
-```
-Or clone from Git if the repo is on GitHub:
-```bash
-git clone your-repo-url /app/trade-finance-platform
+ssh root@YOUR_SERVER_IP "certbot --nginx -d yourdomain.com -d www.yourdomain.com"
 ```
 
-### Create the `.env` file on the server
-```bash
-nano /app/trade-finance-platform/.env
-```
-Add:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
+Certbot will verify domain ownership, install the certificate, and auto-configure Nginx to redirect HTTP → HTTPS. Certificates auto-renew every 90 days.
 
-### Build and start the container
-```bash
-cd /app/trade-finance-platform
-docker compose up --build -d
-```
-
-Verify it's running on port 3000:
-```bash
-curl http://localhost:3000
-```
+App is now live at `https://yourdomain.com`.
 
 ---
 
-## Part 6 — Install Nginx as a Reverse Proxy
+## Part 9 — Connect Supabase (when ready)
 
+1. Go to **supabase.com → your project → Settings → API** and copy the URL, anon key, and service role key
+2. Update the env file on the server:
 ```bash
-sudo apt update && sudo apt install nginx -y
+ssh root@YOUR_SERVER_IP "nano /app/trade-finance/.env"
 ```
-
-Create the site config:
+3. Rebuild the container (required because `NEXT_PUBLIC_*` vars are baked in at build time):
 ```bash
-sudo nano /etc/nginx/sites-available/trade-finance
+ssh root@YOUR_SERVER_IP "cd /app/trade-finance && export \$(grep -v '^#' .env | xargs) && docker compose up --build -d"
 ```
-
-Paste:
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-Enable it:
-```bash
-sudo ln -s /etc/nginx/sites-available/trade-finance /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
----
-
-## Part 7 — Add HTTPS (Free SSL via Let's Encrypt)
-
-GoDaddy sells SSL certificates but Let's Encrypt is free and automatic.
-
-```bash
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-```
-
-Follow the prompts — Certbot will:
-- Verify domain ownership via HTTP
-- Install the certificate
-- Update the Nginx config to redirect HTTP → HTTPS
-- Auto-renew every 90 days
-
-Your site is now live at `https://yourdomain.com`.
-
----
-
-## Part 8 — Update Supabase for Production
-
-1. Go to your Supabase project → **Authentication** → **URL Configuration**
-2. Set **Site URL** to `https://yourdomain.com`
-3. Add `https://yourdomain.com/**` to **Redirect URLs**
-
-Without this, login redirects will break in production.
+4. Go to **Supabase → Authentication → URL Configuration**:
+   - Set **Site URL** to `https://yourdomain.com`
+   - Add `https://yourdomain.com/**` to **Redirect URLs**
 
 ---
 
 ## Summary
 
-| Step | Where |
+| Step | Tool |
 |---|---|
-| Buy domain | GoDaddy |
-| Set DNS A record | GoDaddy DNS dashboard |
-| Run container | Your server (GoDaddy VPS or other) |
-| Reverse proxy | Nginx on the server |
-| SSL certificate | Let's Encrypt (free, auto-renews) |
-| Auth config | Supabase dashboard |
+| Server | Hostinger KVM VPS (Ubuntu 24.04) |
+| SSH access | ed25519 key added via hPanel |
+| Docker | Pre-installed, updated via get.docker.com |
+| App source | Cloned from GitHub |
+| Container | `docker compose up --build -d` |
+| Reverse proxy | Nginx → port 3001 |
+| SSL | Let's Encrypt via Certbot (free, auto-renews) |
+| Domain DNS | A record pointing to server IP |
+| Auth | Supabase (add credentials when ready) |
