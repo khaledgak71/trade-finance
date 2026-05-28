@@ -31,6 +31,7 @@ export default function QuizPage({ params }: { params: { moduleSlug: string } })
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-8">
         <QuizRunner
           moduleSlug={moduleSlug}
+          moduleTitle={MODULE_TITLES[moduleSlug] ?? moduleSlug}
           questions={questionsForClient}
           totalQuestions={content.quiz.length}
         />
