@@ -118,3 +118,32 @@ git@github.com:khaledgak71/trade-finance.git
 ```
 
 Future pushes require no token — just `git push origin main`.
+
+---
+
+## 9. Deployed to Hostinger VPS (72.60.129.36)
+
+### Server setup
+- Provisioned Ubuntu 24.04 VPS on Hostinger (KVM plan)
+- Added local SSH public key via Hostinger hPanel → VPS → SSH Keys
+- Verified key-based SSH access: `ssh root@72.60.129.36`
+- Docker was pre-installed on the server; updated to latest via install script
+
+### Deployment
+- Cloned the GitHub repo to `/app/trade-finance` on the server
+- Created `/app/trade-finance/.env` with placeholder Supabase values (app uses mock client until real credentials are provided)
+- Built and started the container with `docker compose up --build -d`
+- Container runs on host port `3001`, internal port `3000`
+
+### Nginx reverse proxy
+- Installed Nginx and Certbot on the server
+- Configured `/etc/nginx/sites-available/trade-finance` to proxy port `80` → container port `3001`
+- Removed default Nginx site and reloaded
+
+### Result
+App is live at `http://72.60.129.36` returning HTTP `200`.
+
+### Pending
+- Add a domain and point DNS A record to `72.60.129.36`
+- Run `certbot --nginx -d yourdomain.com` to enable HTTPS
+- Update `/app/trade-finance/.env` with real Supabase credentials and rebuild to enable auth
