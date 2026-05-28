@@ -84,3 +84,37 @@ docker compose up --build
 Container responded with HTTP `200` at `http://localhost:3001`.
 
 > Note: Supabase won't connect because `.env.local` still has placeholder values. Replace them with real credentials to test auth flows.
+
+---
+
+## 7. Initialized Git Repository and Pushed to GitHub
+
+### Git setup
+- Initialized a new git repo in the project directory (`git init`)
+- Renamed default branch to `main`
+- Configured git identity for the repo (`gakhlabko@4dssolutions.com`)
+- Staged all project files (excluding `.env.local` which is covered by `.gitignore`)
+- Created initial commit with all 61 files
+
+### GitHub push
+- Installed `gh` CLI locally to `~/.local/bin/gh` (no sudo required — downloaded binary directly)
+- Created repo at `https://github.com/khaledgak71/trade-finance`
+- Pushed `main` branch via HTTPS using a classic PAT with `repo` scope
+
+---
+
+## 8. Switched Remote to SSH
+
+### SSH key setup
+- Generated a new `ed25519` SSH key pair at `~/.ssh/id_ed25519`
+- Added the public key to GitHub under **Settings → SSH keys**
+- Added `github.com` to `~/.ssh/known_hosts` via `ssh-keyscan`
+- Verified connection: `ssh -T git@github.com` confirmed authentication
+
+### Remote update
+Updated the remote URL from HTTPS to SSH:
+```
+git@github.com:khaledgak71/trade-finance.git
+```
+
+Future pushes require no token — just `git push origin main`.
