@@ -6,10 +6,6 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { module_slug, answers } = await request.json() as {
     module_slug: string
     answers: { question_id: string; chosen_key: string }[]
@@ -47,7 +43,7 @@ export async function POST(request: Request) {
     .eq('slug', module_slug)
     .single()
 
-  if (dbModule) {
+  if (user && dbModule) {
     await supabase.from('quiz_attempts').insert({
       user_id: user.id,
       module_id: dbModule.id,
