@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { markdownToHtml } from '@/lib/utils/markdown'
 
 const infographicMap: Record<string, React.ComponentType> = {
@@ -30,6 +30,14 @@ interface LessonViewerProps {
 export default function LessonViewer({ lesson, lessonId, moduleId, isCompleted }: LessonViewerProps) {
   const [completed, setCompleted] = useState(isCompleted)
   const [marking, setMarking] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    if (!expanded) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setExpanded(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [expanded])
 
   const InfographicComponent = lesson.infographic_key ? infographicMap[lesson.infographic_key] : null
   const html = markdownToHtml(lesson.content)
@@ -56,9 +64,35 @@ export default function LessonViewer({ lesson, lessonId, moduleId, isCompleted }
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Visual Infographic</span>
-            <span className="text-xs text-gray-400">Study this diagram as you read the lesson</span>
+            <span className="text-xs text-gray-400">Click the diagram to enlarge</span>
           </div>
-          <InfographicComponent />
+          <div
+            onClick={() => setExpanded(true)}
+            className="cursor-zoom-in rounded-xl overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors"
+          >
+            <InfographicComponent />
+          </div>
+        </div>
+      )}
+
+      {/* Expanded lightbox */}
+      {expanded && InfographicComponent && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-auto p-4 relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setExpanded(false)}
+              className="absolute top-3 right-3 z-10 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold"
+            >
+              ×
+            </button>
+            <InfographicComponent />
+          </div>
         </div>
       )}
 
